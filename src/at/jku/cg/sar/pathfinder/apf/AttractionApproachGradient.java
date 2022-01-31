@@ -11,16 +11,26 @@ import at.jku.cg.sar.sim.flightpath.FlightPath;
 import at.jku.cg.sar.sim.flightpath.WorldFlightLeg;
 import at.jku.cg.sar.trajectory.SimpleTrajectory;
 
+/**
+ * Based on {@link AttractionApproach} but using the gradient (probability/time) to calculate an attraction map
+ * @author ortner
+ */
 public class AttractionApproachGradient extends PathFinder {
 
-	/**
-	 * Based on AttractionApproach but using the gradient (prob/time) to calculate Attraction Map"
-	 */
 	public AttractionApproachGradient() {
 		super(PathFinderType.DISCRETE_ITERATIVE);
 	}
 	
-	public static Grid<Double> createGradientMap(DroneDiscrete drone, SimulatorSettings settings, int positionX, int positionY){
+	/**
+	 * Creates an attraction map based on the gradient (probability over time)
+	 * A {@link SimpleTrajectory} instance is used to estimate the drones travel duration for each particular cell.
+	 * @param drone Current state of the drone (position and probability map)
+	 * @param settings Holds parameters concerning velocities, accelerations and the grid dimensions
+	 * @param positionX
+	 * @param positionY
+	 * @return
+	 */
+	public static Grid<Double> createGradientMap(DroneDiscrete drone, SimulatorSettings settings){
 		Grid<Double> G = new Grid<>(drone.getWidth(), drone.getHeight(), 0.0);
 		
 		for(int x = 0; x < drone.getWidth(); x++) {
@@ -45,7 +55,7 @@ public class AttractionApproachGradient extends PathFinder {
 	public PathFinderResult nextDiscrete(DroneDiscrete drone) {
 		if(drone.visitedAll()) return null;
 
-		Grid<Double> G = createGradientMap(drone, settings,drone.getX(), drone.getY());
+		Grid<Double> G = createGradientMap(drone, settings);
 		GridValue<Double> max = AttractionApproach.selectPoint(G, drone.getX(), drone.getY());
 		
 		return new PathFinderResult(max.getX(), max.getY(), false);

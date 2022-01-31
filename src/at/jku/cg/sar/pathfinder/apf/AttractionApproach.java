@@ -10,16 +10,22 @@ import at.jku.cg.sar.pathfinder.PathFinderResult;
 import at.jku.cg.sar.pathfinder.PathFinderType;
 import at.jku.cg.sar.sim.drone.DroneDiscrete;
 
+/**
+ * Based on Attraction Approach from <a href="https://doi.org/10.1155/2018/6879419">"Intelligent UAV Map Generation and Discrete Path Planning for Search and Rescue Operations"</a>
+ * @author ortner
+ */
 public class AttractionApproach extends PathFinder {
 
-	/**
-	 * Based on Attraction Approach from Paper 01 "Intelligent UAV Map Generation..."
-	 */
 	public AttractionApproach() {
 		super(PathFinderType.DISCRETE_ITERATIVE);
 	}
 	
-	// Same as probability Map
+
+	/**
+	 * Creates an attraction map that equals the probability map
+	 * @param grid Source grid (containing probabilities)
+	 * @return Attraction map
+	 */
 	public static Grid<Double> createAttractionMap(Grid<Double> grid){
 		Grid<Double> A = new Grid<>(grid.getWidth(), grid.getHeight());
 		
@@ -32,6 +38,14 @@ public class AttractionApproach extends PathFinder {
 	}
 	
 	// Probability Map but weighted by exp(distance)
+	/**
+	 * Creates an attraction map that depends on a cells probability value
+	 * weighted by the exponential of the euclidean distance in grid space.
+	 * @param grid Source grid (containing probabilities)
+	 * @param positionX Current X position
+	 * @param positionY Current Y position
+	 * @return Attraction map
+	 */
 	public static Grid<Double> createAttractionMapExp(Grid<Double> grid, int positionX, int positionY){
 		Grid<Double> A = new Grid<>(grid.getWidth(), grid.getHeight());
 		
@@ -48,6 +62,15 @@ public class AttractionApproach extends PathFinder {
 		return A;
 	}
 	
+	/**
+	 * Calculates the density value at <b>positionX/positionY</b> for the given attraction map.
+	 * All cells within the given radius (grid distance) are weighted by their distance and summed up to retrieve the density value
+	 * @param data Attraction map
+	 * @param positionX Target X position
+	 * @param positionY Target Y position
+	 * @param radius Radius to select how many nearby fields should be accounted for
+	 * @return Density value
+	 */
 	public static double calculateDensity(Grid<Double> data, int positionX, int positionY, int radius) {
 		double density = 0.0;
 		
@@ -66,6 +89,20 @@ public class AttractionApproach extends PathFinder {
 		return density;
 	}
 	
+	/**
+	 * Selects a suitable point from given attraction map and current position.<br />
+	 * The selection process looks like this:
+	 * <ol>
+	 * 	<li> Select point with the highest potential/attraction
+	 * 	<li> If multiple points have the same highest value -> Calculate density of those points
+	 * 	<li> Select point with highest density
+	 * 	<li> If multiple points have the same density -> Select closest one from those points
+	 * </ol>
+	 * @param attractionMap Attraction map
+	 * @param positionX Current X position
+	 * @param positionY Current Y position
+	 * @return {@link GridValue} representing the selected point
+	 */
 	public static GridValue<Double> selectPoint(Grid<Double> attractionMap, int positionX, int positionY) {
 		List<GridValue<Double>> maxAttractedPoints = attractionMap.listMax();
 		
@@ -90,9 +127,9 @@ public class AttractionApproach extends PathFinder {
 				
 				if(maxCount == 1) break;
 				radius++;
-			}			
+			}		
+			// Fallback if ALL points have the same density, use the closest one	
 			if(maxDensityPoints.size() > 1) {
-				// Fallback if ALL points have the same density, use the closest one
 				maxDensityPoints.sort((p0, p1) -> {
 					double dist0 = p0.distance(positionX, positionY);
 					double dist1 = p1.distance(positionX, positionY);

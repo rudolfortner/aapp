@@ -35,7 +35,7 @@ public class SimpleTrajectory extends TrajectoryPlanner implements Cloneable {
 		// Handle end
 		if(next == null) {
 			// After last leg, decelerate to 0.0 speed
-			WorldFlightLeg decelerationLeg	= extendLeg(previousScanLeg, 0.0, true);
+			WorldFlightLeg decelerationLeg	= extendLeg(previousScanLeg, 0.0, settings.getAcceleration(), -settings.getDeceleration(), true);
 			legs.add(decelerationLeg);
 			return new ArrayList<>(legs);
 		}
@@ -48,7 +48,7 @@ public class SimpleTrajectory extends TrajectoryPlanner implements Cloneable {
 			scanLeg = createScanLeg(previousPathFinderResult.getPosX(), previousPathFinderResult.getPosY(), pattern);
 			previousScanLeg = scanLeg;
 			
-			WorldFlightLeg accelerationLeg	= extendLeg(scanLeg, 0.0, false);
+			WorldFlightLeg accelerationLeg	= extendLeg(scanLeg, 0.0, settings.getAcceleration(), -settings.getDeceleration(), false);
 			
 			legs.add(accelerationLeg);
 			legs.add(scanLeg);
@@ -75,9 +75,16 @@ public class SimpleTrajectory extends TrajectoryPlanner implements Cloneable {
 	
 	
 	/**
-	 * Creates a simple STRAIGHT connection between two legs
+	 * Connects two scan legs (those directly over a cell). This is done in the following way:<br />
+	 * <ul>
+	 * 		<li> <b>from</b> leg gets extended by a deceleration leg
+	 * 		<li> <b>to</b> leg gets extended by an acceleration leg
+	 * 		<li> Both new legs get directly connected
+	 * </ul>
+	 * Special case: <b>from</b> and <b>to</b> are colinear and can be directly connected without acceleration/deceleration leg
 	 * @param from
 	 * @param to
+	 * @param fastFlight
 	 */
 	private void connectScanLegs(WorldFlightLeg from, WorldFlightLeg to, boolean fastFlight) {
 
@@ -95,8 +102,8 @@ public class SimpleTrajectory extends TrajectoryPlanner implements Cloneable {
 		}
 
 		// TO ALLOW DIRECTIONAL CHANGES, DECELLERATION AND ACCELERATION LEGS ARE NEEDED
-		WorldFlightLeg decelerationLeg	= extendLeg(from, 0.0, true);
-		WorldFlightLeg accelerationLeg	= extendLeg(to, 0.0, false);
+		WorldFlightLeg decelerationLeg	= extendLeg(from, 0.0, settings.getAcceleration(), -settings.getDeceleration(), true);
+		WorldFlightLeg accelerationLeg	= extendLeg(to, 0.0, settings.getAcceleration(), -settings.getDeceleration(), false);
 		List<WorldFlightLeg> connect = connectDirect(decelerationLeg, accelerationLeg, speed, settings.getAcceleration(), -settings.getDeceleration());
 		
 		legs.add(decelerationLeg);

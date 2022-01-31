@@ -40,7 +40,7 @@ public class TrajectorySandbox extends TrajectoryPlanner implements Cloneable {
 			scanLeg = createScanLeg(previousPathFinderResult.getPosX(), previousPathFinderResult.getPosY(), pattern);
 			previousScanLeg = scanLeg;
 			
-			WorldFlightLeg accelerationLeg	= extendLeg(scanLeg, 0.0, false);
+			WorldFlightLeg accelerationLeg	= extendLeg(scanLeg, 0.0, settings.getAcceleration(), -settings.getDeceleration(), false);
 			
 			legs.add(accelerationLeg);
 			legs.add(scanLeg);
@@ -76,8 +76,8 @@ public class TrajectorySandbox extends TrajectoryPlanner implements Cloneable {
 		// start and end are the same
 		if(from.getToX().equals(to.getFromX()) && from.getToY().equals(to.getFromY())) return;
 
-		WorldFlightLeg decelerationLeg	= extendLeg(from, 0.0, true);
-		WorldFlightLeg accelerationLeg	= extendLeg(to, 0.0, false);
+		WorldFlightLeg decelerationLeg	= extendLeg(from, 0.0, settings.getAcceleration(), -settings.getDeceleration(), true);
+		WorldFlightLeg accelerationLeg	= extendLeg(to, 0.0, settings.getAcceleration(), -settings.getDeceleration(), false);
 		
 		WorldFlightLegBezier bezier = WorldFlightLegBezier.Create(decelerationLeg, accelerationLeg, List.of(new WorldPoint(decelerationLeg.getToX(), accelerationLeg.getFromY())), 4, settings.getCellSize());
 		

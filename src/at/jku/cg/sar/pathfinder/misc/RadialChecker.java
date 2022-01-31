@@ -23,9 +23,11 @@ import at.jku.cg.sar.sim.flightpath.WorldFlightLeg;
 import at.jku.cg.sar.trajectory.SimpleTrajectory;
 
 /**
+ * Our new {@link RadialChecker} tries to minimize directional changes hence reduces the amount of accelerations/decelerations
+ * and the enormous time this maneuvers take. While doing so it tries to maximize the gradient of accumulated probability over time.
+ * <br />
  * Based on an idea by Prof. Bimber
  * @author ortner
- *
  */
 public class RadialChecker extends PathFinder {
 
@@ -89,6 +91,11 @@ public class RadialChecker extends PathFinder {
 	}
 	
 	
+	/**
+	 * @param drone Current state of the drone (position and probability map)
+	 * @param settings Holds parameters concerning velocities, accelerations and the grid dimensions
+	 * @return
+	 */
 	public static PathFinderResult fallback(DroneDiscrete drone, SimulatorSettings settings) {
 		if(drone.visitedAll()) return null;
 		
@@ -118,6 +125,14 @@ public class RadialChecker extends PathFinder {
 		return new PathFinderResult(max.getX(), max.getY(), false);
 	}
 	
+	/**
+	 * @param drone Current state of the drone (position and probability map)
+	 * @param settings Holds parameters concerning velocities, accelerations and the grid dimensions
+	 * @param r0 Only cells farer away than <b>r0</b> are being considered
+	 * @param r1 Only cells closer than <b>r1</b> are being considered
+	 * @param allRadials If set, all possible radials are being considered. Otherwise all multiples of 45° are used
+	 * @return List of all evaluated radials sorted by gradient
+	 */
 	public static List<RadialResult> replan(DroneDiscrete drone, SimulatorSettings settings, double r0, double r1, boolean allRadials){
 		
 		List<RadialResult> results = new ArrayList<>(8);
@@ -146,6 +161,16 @@ public class RadialChecker extends PathFinder {
 	}
 	
 	
+	/**
+	 * Evaluates a radial by estimating the trajectory traversal with our {@link SimpleTrajectory}-Planner.
+	 * Only cells between <b>r0</b> and <b>r1</b> are being considered
+	 * @param drone Current state of the drone (position and probability map)
+	 * @param settings Holds parameters concerning velocities, accelerations and the grid dimensions
+	 * @param radial Radial value [0...360)
+	 * @param r0 Only cells farer away than <b>r0</b> are being considered
+	 * @param r1 Only cells closer than <b>r1</b> are being considered
+	 * @return
+	 */
 	public static RadialResult evaluateRadial(DroneDiscrete drone, SimulatorSettings settings, double radial, double r0, double r1) {
 		
 		SimpleTrajectory planner = new SimpleTrajectory(settings);
@@ -195,6 +220,13 @@ public class RadialChecker extends PathFinder {
 		return new RadialResult(radial, maxGradient, finalPath);
 	}
 	
+	/**
+	 * Generates a List of all {@link GridValue}s that lie on the given <b>radial</b>
+	 * @param drone Current state of the drone (position and probability map)
+	 * @param radial Radial value [0...360)
+	 * @param includeCurrent Whether to include the cell on the current position or not
+	 * @return List of {@link GridValue}s sorted by distance from current position
+	 */
 	public static List<GridValue<Double>> onRadial(DroneDiscrete drone, double radial, boolean includeCurrent){
 		int currentX = drone.getX(), currentY = drone.getY();
 		
@@ -229,9 +261,10 @@ public class RadialChecker extends PathFinder {
 	}
 
 
-
-
-
+	/**
+	 * Holds an evaluation result from one particular radial
+	 * @author ortner
+	 */
 	public static class RadialResult {
 		public double radial;
 		public double gradient;

@@ -1,5 +1,11 @@
 # Acceleration-Aware Path Planning
 
+Path planning is an important topic in search and rescue for finding lost and injured persons in a short amount of time.
+For this we developed a new algorithm with maximizes the accumulated probability of target detection while 
+
+The main AOS repository with a list of related publications can be found here:
+ - [AOS Repository](https://github.com/JKU-ICG/AOS)
+
 ## Installation
 The code was written int Eclipse IDE with the integrated automated build system.
 Simply import the code into your workspace and start using it.
